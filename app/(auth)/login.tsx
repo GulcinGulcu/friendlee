@@ -1,10 +1,28 @@
 import { COLORS } from "@/constants/theme";
 import { styles } from "@/styles/auth.styles";
+import { useSSO } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { View, Text, Image, TouchableOpacity } from "react-native";
 
 const Login = () => {
-  const handleGoogleSignIn = () => {};
+  const { startSSOFlow } = useSSO();
+  const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { createdSessionId, setActive } = await startSSOFlow({
+        strategy: "oauth_google",
+      });
+      if (createdSessionId && setActive) {
+        setActive({ session: createdSessionId });
+        router.replace("/(tabs)");
+      }
+    } catch (error) {
+      console.error("Oauth error", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* LOGO/BRAND SECTION */}
@@ -31,11 +49,13 @@ const Login = () => {
           activeOpacity={0.9}
         >
           <View style={styles.googleIconContainer}>
-            <Ionicons name="logo-google" size={20} color={COLORS.surface}/>
+            <Ionicons name="logo-google" size={20} color={COLORS.surface} />
           </View>
-           <Text style={styles.googleButtonText}>Continue with Google</Text>
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
         </TouchableOpacity>
-        <Text style={styles.termsText}>By continuing, you agree to our Terms and Privacy policy</Text>
+        <Text style={styles.termsText}>
+          By continuing, you agree to our Terms and Privacy policy
+        </Text>
       </View>
     </View>
   );
