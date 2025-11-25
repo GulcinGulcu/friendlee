@@ -4,9 +4,45 @@ import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/theme";
+import { Id } from "@/convex/_generated/dataModel";
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
-//todo: add actual type
-const Post = ({ post }: { post: any }) => {
+type PostProps = {
+  post: {
+    _id: Id<"posts">;
+    _creationTime: number;
+    caption?: string;
+    userId: Id<"users">;
+    imageUrl: string;
+    likes: number;
+    comments: number;
+    isLiked: boolean;
+    isBookmarked: boolean;
+    author: {
+      id: Id<"users">;
+      username: string;
+      image: string;
+    };
+  };
+};
+const Post = ({ post }: PostProps) => {
+  const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [numberOfLikes, setNumberOfLikes] = useState(post.likes);
+
+  const toggleLike = useMutation(api.posts.toggleLike);
+
+  const handleToggleLike = async () => {
+    try {
+      const newIsLiked = await toggleLike({ postId: post._id });
+      setIsLiked(newIsLiked);
+      setNumberOfLikes((prev) => (newIsLiked ? prev + 1 : prev - 1));
+    } catch (error) {
+      console.log("Error toggling like", error);
+    }
+  };
+
   return (
     <View style={styles.post}>
       <View style={styles.postHeader}>
@@ -35,8 +71,12 @@ const Post = ({ post }: { post: any }) => {
       />
       <View style={styles.postActions}>
         <View style={styles.postActionsLeft}>
-          <TouchableOpacity>
-            <Ionicons name="heart-outline" color={COLORS.white} size={28} />
+          <TouchableOpacity onPress={handleToggleLike}>
+            <Ionicons
+              name={isLiked ? "heart" : "heart-outline"}
+              color={isLiked ? COLORS.primary : COLORS.white}
+              size={28}
+            />
           </TouchableOpacity>
           <TouchableOpacity>
             <Ionicons
@@ -51,10 +91,13 @@ const Post = ({ post }: { post: any }) => {
         </TouchableOpacity>
       </View>
       <View style={styles.postInfo}>
+        {numberOfLikes > 0 && (
+          <Text style={styles.likesText}>{numberOfLikes} likes</Text>
+        )}
         {post.caption && (
           <View style={styles.captionContainer}>
             <Text style={styles.captionUsername}>{post.author.username}</Text>
-             <Text style={styles.captionText}>{post.caption}</Text>
+            <Text style={styles.captionText}>{post.caption}</Text>
           </View>
         )}
         <TouchableOpacity>
