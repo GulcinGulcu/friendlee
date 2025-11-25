@@ -48,7 +48,7 @@ export const fetchPosts = query({
 
     const postsWithInfo = await Promise.all(
       posts.map(async (post) => {
-        const authorOfPost = await ctx.db.get(post.userId);
+        const authorOfPost = (await ctx.db.get(post.userId))!;
 
         const like = await ctx.db
           .query("likes")
@@ -78,5 +78,48 @@ export const fetchPosts = query({
     );
 
     return postsWithInfo;
+  },
+});
+
+export const toggleLike = mutation({
+  args: {
+    postId: v.id("posts"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+
+    const existing = await ctx.db
+      .query("likes")
+      .withIndex("by_user_and_post", (q) =>
+        q.eq("userId", currentUser._id).eq("postId", args.postId)
+      )
+      .first();
+
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+
+    //unlike if existing
+    if (existing) {
+      await ctx.db.delete(existing._id);
+      await ctx.db.patch(args.postId, { likes: post.likes - 1 });
+      return false;
+    } else {
+      await ctx.db.insert("likes", {
+        postId: args.postId,
+        userId: currentUser._id,
+      });
+      await ctx.db.patch(args.postId, { likes: post.likes + 1 });
+     
+      // if it isnot my post, create a notification
+      if (currentUser._id !== post.userId) {
+        await ctx.db.insert("notifications", {
+          senderId: currentUser._id,
+          receiverId: post.userId,
+          type: "like",
+          postId: args.postId,
+        });
+      }
+      return true;
+    }
   },
 });
