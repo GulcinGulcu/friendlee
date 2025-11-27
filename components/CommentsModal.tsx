@@ -37,6 +37,7 @@ export const CommentsModal = ({
   const commentPost = useMutation(api.comments.commentPost);
 
   const handleCommentPost = async () => {
+    if (!newComment.trim()) return;
     try {
       await commentPost({ postId, content: newComment });
       setNewComment("");
