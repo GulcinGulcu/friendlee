@@ -60,7 +60,7 @@ export const fetchPosts = query({
         const bookmark = await ctx.db
           .query("bookmarks")
           .withIndex("by_user_and_post", (q) =>
-            q.eq("postId", post._id).eq("userId", currentUser._id)
+            q.eq("userId", currentUser._id).eq("postId", post._id)
           )
           .first();
 
@@ -109,7 +109,7 @@ export const toggleLike = mutation({
         userId: currentUser._id,
       });
       await ctx.db.patch(args.postId, { likes: post.likes + 1 });
-     
+
       // if it isnot my post, create a notification
       if (currentUser._id !== post.userId) {
         await ctx.db.insert("notifications", {
