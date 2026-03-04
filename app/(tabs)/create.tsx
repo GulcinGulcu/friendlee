@@ -57,7 +57,7 @@ const CreateScreen = () => {
           httpMethod: "POST",
           uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
           mimeType: "image/jpeg",
-        }
+        },
       );
 
       if (uploadResult.status !== 200) throw new Error("Upload failed");
@@ -66,12 +66,14 @@ const CreateScreen = () => {
 
       await createPost({ storageId, caption });
 
+      setSelectedImage(null);
+      setCaption("");
+
       router.push("/(tabs)");
     } catch (error) {
       console.log("Failed to share the post");
     } finally {
       setIsSharing(false);
-      setSelectedImage("");
     }
   };
 
