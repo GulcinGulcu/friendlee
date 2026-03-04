@@ -1,3 +1,5 @@
+import Loader from "@/components/Loader";
+import Post from "@/components/Post";
 import Story from "@/components/Story";
 import { STORIES } from "@/constants/mock-data";
 import { COLORS } from "@/constants/theme";
@@ -6,12 +8,17 @@ import { styles } from "@/styles/feed.styles";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
-import Loader from "@/components/Loader";
-import Post from "@/components/Post";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function Index() {
   const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    Alert.alert("Logout", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Logout", style: "destructive", onPress: () => signOut() },
+    ]);
+  };
 
   const posts = useQuery(api.posts.fetchPosts);
 
@@ -23,7 +30,7 @@ export default function Index() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Friendlee</Text>
-        <TouchableOpacity onPress={() => signOut()}>
+        <TouchableOpacity onPress={handleSignOut}>
           <Ionicons name="log-out-outline" color={COLORS.white} size={22} />
         </TouchableOpacity>
       </View>
