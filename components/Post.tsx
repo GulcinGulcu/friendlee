@@ -10,6 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { CommentsModal } from "./CommentsModal";
 import { formatDistanceToNow } from "date-fns";
+import { useUser } from "@clerk/clerk-expo";
 
 type PostProps = {
   post: {
@@ -36,8 +37,15 @@ const Post = ({ post }: PostProps) => {
   const [numberOfComments, setNumberOfComments] = useState(post.comments);
   const [showComments, setShowComments] = useState(false);
 
+  const { user } = useUser();
+
   const toggleLike = useMutation(api.posts.toggleLike);
   const toggleBookmark = useMutation(api.bookmarks.toggleBookmark);
+  const deletePost = useMutation(api.posts.deletePost);
+  const currentUser = useQuery(
+    api.users.getUserByClerkId,
+    user ? { clerkId: user.id } : "skip",
+  );
 
   const handleToggleLike = async () => {
     try {
@@ -58,6 +66,14 @@ const Post = ({ post }: PostProps) => {
     }
   };
 
+  const handleDeletePost = async () => {
+    try {
+      await deletePost({ postId: post._id });
+    } catch (error) {
+      console.log("Error deleting post", error);
+    }
+  };
+
   return (
     <View style={styles.post}>
       <View style={styles.postHeader}>
@@ -73,9 +89,19 @@ const Post = ({ post }: PostProps) => {
             <Text style={styles.postUsername}>{post.author.username}</Text>
           </TouchableOpacity>
         </Link>
-        <TouchableOpacity>
-          <Ionicons name="ellipsis-horizontal" color={COLORS.white} size={20} />
-        </TouchableOpacity>
+        {currentUser?._id === post.userId ? (
+          <TouchableOpacity onPress={handleDeletePost}>
+            <Ionicons name="trash-outline" color={COLORS.white} size={20} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity>
+            <Ionicons
+              name="ellipsis-horizontal"
+              color={COLORS.white}
+              size={20}
+            />
+          </TouchableOpacity>
+        )}
       </View>
       <Image
         source={post.imageUrl}
